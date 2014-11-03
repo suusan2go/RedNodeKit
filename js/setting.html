@@ -1,0 +1,71 @@
+<script src="../js/rest.js"></script>
+<script src="../js/common.js"></script>
+<script>
+
+$(function(){
+  var fs = require('fs');
+  var obj = JSON.parse(fs.readFileSync( configFile, 'utf8')); 
+  // var obj = require('../setting.json');
+  $("#redmine-url").val(obj.url);
+  $("#apikey").val(obj.apikey);
+});
+
+$("#save").click(function(){
+  var fs = require('fs');
+
+  var data = {
+    "url" :  $("#redmine-url").val() ,
+    "apikey" : $("#apikey").val()
+  };
+
+  fs.writeFile(configFile, JSON.stringify(data), function (err) {
+    console.log(err);
+  });
+
+  location.reload();
+
+});
+
+</script>
+
+<form class="form-vertical" role="form">  
+<fieldset>
+<legend>redmine設定</legend>
+ <div class="form-group">
+      <label for="redmine-url" class="col-md-4 control-label">redmine URL</label>
+         <div class="col-md-8">
+         <input type="url" class="form-control" id="redmine-url" placeholder="http://sample.com/redmine">
+      </div>
+ </div>
+
+  <div class="form-group">
+        <label for="apikey" class="col-md-4 control-label">API Key</label>
+        <div class="col-md-8">
+          <input type="password" class="form-control" id="apikey">
+        </div>
+  </div>
+
+  <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button type="button"  class="btn btn-primary" id="save" data-toggle="modal" data-target="#saveModal">Save</button>
+        </div>
+  </div>
+</fieldset>
+</form>
+
+<div class="modal fade" id="saveModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+      </div>
+      <div class="modal-body">
+        <div class="primary">
+          <p class="text-success">設定を保存しました。</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">close</button>
+      </div>
+    </div>
+  </div>
+</div>

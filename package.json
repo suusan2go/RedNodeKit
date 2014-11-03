@@ -1,0 +1,13 @@
+{
+  "name": "RedNodeKit",
+    "description": "Redmine client in node-webkit",
+    "version": "0.0.1",
+    "main": "./html/index.html",
+    "window": {
+      "title": "RedNodeKit",
+      "toolbar": false,
+      "width": 400,
+      "height": 600
+    }
+}
+
