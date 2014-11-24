@@ -14,39 +14,32 @@
   //デフォルト読み込み
   $(function(){
         $("#post").load("post.html");  
- //       $("#mytickets").load("mytickets.html");  
+        $("#mytickets").load("mytickets.html");  
         $("#setting").load("setting.html");  
   });
   
 </script>
 
+<style type="text/css">
+  body { padding-top: 100px; }
+</style>
 
-<nav class="navbar navbar-default" role="navigation">
-  <div class="container-fluid">
-    <!-- Brand and toggle get grouped for better mobile display -->
+<div class="container">
+  <div class="navbar navbar-default navbar-fixed-top">
     <div class="navbar-header">
-<!--     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
--->
-      <a class="navbar-brand" href="#">RedNodeKit -redmine client-</a>
+      <div class="navbar-brand">RedNodeKit</div>
     </div>
-
-  </div><!-- /.container-fluid -->
-</nav>
-
-<ul class="nav nav-tabs" role="tablist">
-  <li id="menu-post" class="active"><a href="#post" data-toggle="tab">Post Issue</a></li>
-  <!-- <li id="menu-mytickets" ><a href="#mytickets" data-toggle="tab">My Tickets</a></li> -->
-  <li id="menu-setting"><a href="#setting" data-toggle="tab">Setting</a></li>
-</ul>
+    <ul class="nav nav-tabs">
+      <li id="menu-post" class="active"><a href="#post" data-toggle="tab">Post Issue</a></li>
+      <li id="menu-mytickets" ><a href="#mytickets" data-toggle="tab">My Tickets</a></li>
+      <li id="menu-setting"><a href="#setting" data-toggle="tab">Setting</a></li>
+    </ul>
+  </div>
+</div>
 
 <div class="tab-content container">
   <div class="tab-pane active" id="post"> </div>
- <!-- <div class="tab-pane" id="mytickets"> </div> -->
+  <div class="tab-pane" id="mytickets"> </div>
   <div class="tab-pane" id="setting"> </div>
 </div>
 

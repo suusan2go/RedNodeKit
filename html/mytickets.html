@@ -1,1 +1,395 @@
-my tickets
+<link rel="stylesheet" href="../js/hook/hook.css" type="text/css" />
+<script src="../js/rest.js"></script>
+<script src="../js/common.js"></script>
+<script src="../js/hook/hook.js"></script>
+<script src="../js/hook/mousewheel.js"></script>
+
+<script>
+
+  //チケット登録時にset
+  var issue_id="";
+
+  //tickets json  to row function
+  function ticketToRow(ticket){
+    var row = "<tr id=\"" + ticket.id  +  "\">"  +
+      "<td>" + ticket.id + "</td>" +
+      "<td>" + ticket.project.name + "</td>" +
+      "<td>" + ticket.subject + "</td>" +
+      "<td>" + ticket.due_date + "</td>" +
+      "<td>" + ticket.status.name + "</td>" +
+      "</tr>";
+    return row;
+  }
+
+  //get tickets from redmine server
+  function setTicketsToTable(){
+
+    //initialize table
+    $( '#tickets' ).find("tr:gt(0)").remove();
+
+    var fs = require('fs');
+    var setting = JSON.parse(fs.readFileSync( configFile, 'utf8')); 
+
+    getIssues(setting.url, setting.apikey).done(function(ticketsJson){
+
+      console.log("setTicketsToTable:get tickets from redmine server");
+      for( var i=0; i <  ticketsJson.issues.length; i++ ){
+        $('#tickets').append(ticketToRow( ticketsJson.issues[i] ) );
+      }
+
+      //event definition
+      $('#tickets td').click(function(){
+        var $cur_td = $(this)[0]; 
+        var $cur_tr = $(this).parent()[0];
+        issue_id = $cur_tr.id;
+        console.log( "clicked:" +  $cur_tr.id );
+
+        //get issue detail information
+        getIssue(setting.url, setting.apikey, issue_id ).done(function(ticketJson){
+          console.log("get ticket from redmine server");
+
+          //project
+          $('#project_view').html(ticketJson.issue.project.name);
+          $('#project_change').html(ticketJson.issue.project.name);
+
+          //members
+          $('#members_view').html(ticketJson.issue.assigned_to.name);
+
+          //trackers
+          $('#trackers_view').html(ticketJson.issue.tracker.name);
+
+          //title
+          $('#title_view').html(ticketJson.issue.subject);
+          $('#title_change').val(ticketJson.issue.subject);
+
+          //description
+          $('#memo_view').html(ticketJson.issue.description);
+
+          //date
+          $('#date_view').html(ticketJson.issue.due_date);
+          $('#date_change').val(ticketJson.issue.due_date);
+
+          //status
+          $('#status_view').html(ticketJson.issue.status.name);
+
+          //journal
+          $('#journals_view').empty();
+          for (var i=0; i < ticketJson.issue.journals.length;i++){
+
+            var details="";
+            for(var j=0; j < ticketJson.issue.journals[i].details.length; j++){
+              details = details + "<small class=\"text-success\">"  + 
+                ticketJson.issue.journals[i].details[j].name + " </small>";
+
+              if(ticketJson.issue.journals[i].details[j].old_value != null){
+                details = details +  "<small  class=\"text-success\">" + 
+                  ticketJson.issue.journals[i].details[j].old_value  + 
+                  " => " + ticketJson.issue.journals[i].details[j].new_value  +"</small> </br>";
+                }else{
+                details = details +  "<small  class=\"text-success\">" + "null"  + 
+                  " => " + ticketJson.issue.journals[i].details[j].new_value  +"</small>";
+              }
+            }
+
+            $('#journals_view').append(
+            "<div class=\"panel panel-default\"><div class=\"panel-heading\">" +
+                ticketJson.issue.journals[i].created_on.substring(0,10) +                
+                " updated by "  +  ticketJson.issue.journals[i].user.name  + "</div>" +            
+              "<div class=\"panel-body\">" + details +                
+                ticketJson.issue.journals[i].notes +   "</div>");
+            }
+
+            //change modal setting
+            var projectid = ticketJson.issue.project.id;
+            //members
+            getMenmbers(setting.url, apikey, projectid).done(function(memberJson){
+              var members = memberJson.memberships;
+              $('#members_change > option').remove();  
+              $.each(members, function() {
+                var o1 = new Option("",this.user.id);
+                $(o1).html(this.user.name);  
+                $("#members_change").append(o1);  
+                return(this != undefined);
+              });
+              $('#members_change').val(ticketJson.issue.assigned_to.id);
+            });
+            //status
+            getStatuses(setting.url, apikey).done(function(statusJson){
+              var statuses = statusJson.issue_statuses;
+              $('#status_change > option').remove();  
+              $.each(statuses, function() {
+                var o1 = new Option("",this.id);
+                $(o1).html(this.name);  
+                $("#status_change").append(o1);  
+                return(this != undefined);
+              });
+              $('#status_change').val(ticketJson.issue.status.id);
+            });
+
+            //trackers
+            getTrackers(setting.url, setting.apikey,projects.identifier).done(function(trackerJson){
+              var trackers = trackerJson.trackers;
+              //トラッカー取得
+              $('#trackers_change > option').remove();  
+              $.each(trackers, function() {
+                var o1 = new Option("",this.id);
+                $(o1).html(this.name);  
+                $("#trackers_change").append(o1);  
+                return(this != undefined);
+              });
+              $('#trackers_change').val(ticketJson.issue.tracker.id);
+            });
+          });
+          $('#issueViewModal').modal('show');
+        });
+      });
+    }
+
+    $("#editIssue").click(function(){
+      $("#issueViewModal").modal('hide');
+    });
+
+    $("#putIssue").click(function(){
+      //buttonをdisableに
+      $("#putIssue").addClass("disabled");
+
+      var fs = require('fs');
+      var setting = JSON.parse(fs.readFileSync( configFile, 'utf8')); 
+      var issue = {
+        issue : {
+          tracker_id: $('#trackers_change option:selected').val(),
+          subject: $("#title_change").val(),
+          assigned_to_id: $("#members_change").val(),
+          status_id: $("#status_change").val(),
+          due_date:$("#date_change").val(),
+          notes:$("#note").val()
+        }
+      };
+
+      var update = updateIssue(setting.url, setting.apikey, issue, issue_id)
+      update.done(function(resultJson){
+        console.log(resultJson);
+      })
+      // 何故かfailとして扱われるのでstatusコードで判断する。
+      .fail(function(resultJson){
+        if(resultJson.status=='200'){
+          //成功時
+          console.log(resultJson);
+          $("#result_update").html("チケットを更新しました。");
+          $("#result_update").attr("class", "text-success");
+          $("#note").val("");
+          //issue_idを初期化
+          issue_id="";
+          setTicketsToTable();
+          $('#issueEditModal').modal('hide');
+          }else{
+          //失敗時
+          console.log(resultJson);
+          $("#result_update").html("チケットの更新に失敗しました。");
+
+          if(resultJson.responseJSON){
+            $("#result_update").append(resultJson.responseJSON.errors);
+            }else{
+            $("#result_update").append(resultJson.statusText);
+          }
+          $("#result_update").attr("class", "text-danger");
+        }
+      });
+
+      //buttonのdisableを解除
+      $("#putIssue").removeClass("disabled");
+    });
+
+    $(function(){
+      setTicketsToTable();
+    });
+
+    //for hook.js
+    $('#hook').hook({
+      reloadPage:  false,
+      reloadEl: function(){
+        setTicketsToTable();
+      }
+    });
+
+</script>
+
+<div class="hook" id="hook"></div>
+
+<table id="tickets"  class="table table-hover table-bordered">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Project</th>
+      <th>Subject</th>
+      <th>Due Date</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<div class="modal fade" id="issueViewModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" >チケット</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" id="#container" role="form">  
+          <fieldset>
+            <div class="form-group">
+              <label for="projects_view" class="col-xs-4 control-label">プロジェクト</label>
+              <div class="col-xs-8">
+                <p id="project_view" class="form-control-static"></p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="trackers_view" class="col-xs-4 control-label">トラッカー</label>
+              <div class="col-xs-8">
+                <p id="trackers_view" class="form-control-static"></p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="members_view" class="col-xs-4 control-label">担当者</label>
+              <div class="col-xs-8">
+                <p id="members_view" class="form-control-static"></p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="status_view" class="col-xs-4 control-label">状態</label>
+              <div class="col-xs-8">
+                <p id="status_view" class="form-control-static"></p>
+              </div>
+            </div>
+
+
+            <div class="form-group">
+              <label for="date_view" class="col-xs-4 control-label">期日</label>
+              <div class="col-xs-8">
+                <p type="date" class="form-control-static" id="date_view"></p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="title_view" class="col-sm-4 control-label">チケット名</label>
+              <div class="col-sm-8">
+                <p type="text" class="form-control-static" id="title_view" placeholder="チケットのタイトルを記載してください"> </p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="memo_view" class="col-sm-4 control-label">説明</label>
+              <div class="col-sm-8">
+                <p class="form-control-static" id="memo_view" rows="3" placeholder="チケットの詳細を入力し>てください"></p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="title_view" class="col-sm-4 control-label">履歴</label>
+              <div id="journals_view" class="col-sm-8"></div>
+            </div>
+
+          </fieldset>
+        </form>
+        <div class="modal-footer">
+          <button class="btn" data-dismiss="modal" aria-hidden="true">close</button>
+          <button type="button"  class="btn btn-primary" id="editIssue" data-toggle="modal" data-target="#issueEditModal" >Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="issueEditModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>チケット</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" id="#container" role="form">  
+          <fieldset>
+            <div class="form-group">
+              <label for="projects_change" class="col-xs-4 control-label">プロジェクト</label>
+              <div class="col-xs-8">
+                <p id="project_change" class="form-control-static"></p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="trackers_change" class="col-xs-4 control-label">トラッカー</label>
+              <div class="col-xs-8">
+                <select id="trackers_change" class="form-control"></select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="members_change" class="col-xs-4 control-label">担当者</label>
+              <div class="col-xs-8">
+                <select id="members_change" class="form-control"></select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="status_change" class="col-xs-4 control-label">状態</label>
+              <div class="col-xs-8">
+                <select id="status_change" class="form-control"></select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="date_change" class="col-xs-4 control-label">期日</label>
+              <div class="col-xs-8">
+                <input type="date" class="form-control" id="date_change">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="title_change" class="col-sm-4 control-label">チケット名</label>
+              <div class="col-sm-8">
+                <input type="text" class="form-control" id="title_change" placeholder="チケットのタイトルを記載してください">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="note" class="col-sm-4 control-label">注記</label>
+              <div class="col-sm-8">
+                <textarea class="form-control" id="note" rows="3" placeholder=""></textarea>
+              </div>
+            </div>
+
+
+          </fieldset>
+        </form>
+        <div class="modal-footer">
+          <button class="btn" data-dismiss="modal" aria-hidden="true">close</button>
+          <button type="button"  class="btn btn-primary" id="putIssue" data-toggle="modal" data-target="#resultUpdateModal" >Update</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="resultUpdateModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+      </div>
+      <div class="modal-body">
+        <div class="primary">
+          <p class="text-success" id="result_update">result</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">close</button>
+      </div>
+    </div>
+  </div>
+</div>
+

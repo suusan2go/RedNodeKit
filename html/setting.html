@@ -21,7 +21,10 @@ $("#save").click(function(){
   fs.writeFile(configFile, JSON.stringify(data), function (err) {
     console.log(err);
   });
+});
 
+$('#saveModal').on('hidden.bs.modal', function (e) {
+    // do something...
   location.reload(true);
 });
 
