@@ -9,7 +9,8 @@ simple redmine client (builted by node-webkit)
 * Japanese version only now.
 
 #installation 
-This app only support Mac OS X.(but you can use your platform by copying  files and download your platform node-webkit.)
+This app supports Mac OS X and Windows8.1.
+(but you can use your platform by copying  files and download your platform node-webkit.)
 
 Download from releases/latest
 
