@@ -50,7 +50,7 @@ function getTrackers(redmine_url,apikey,projectName){
 
   return $.ajax({
     type : "GET", 
-         url : redmine_url  +  "/trackers.json?key=" + apikey, 
+         url : redmine_url  +  "/projects/"+ projectName  +".json?include=trackers&key=" + apikey, 
          contentType : 'text/plain; charset=utf-8', 
          dataType : "json", 
          success : function(data) { 
@@ -167,21 +167,21 @@ function getIssue(redmine_url, apikey, id){
 function getStatuses(redmine_url,apikey){
 
     return $.ajax({
-          type : "GET",
-                    url : redmine_url  +  "/issue_statuses.json",
-                    contentType : 'text/plain; charset=utf-8',
-                    dataType : "json",
-                    success : function(data) {
+      type : "GET",
+           url : redmine_url  +  "/issue_statuses.json?key=" + apikey,
+           contentType : 'text/plain; charset=utf-8',
+           dataType : "json",
+           success : function(data) {
 
-                                 if (data == null || data == undefined) {
-                                                console.log("getMenmbers:Transaction error. ");
-                                                             return;
-                                                                        }
-                                          },
-                    error : function(XMLHttpRequest, textStatus, errorThrown) { //
-                                                 console.log("getMembers:Server Error . Pleasy try again later." + errorThrown);
-                                                                  },
-                    complete : function() {
-                                                     }
-      });
+             if (data == null || data == undefined) {
+               console.log("getMenmbers:Transaction error. ");
+               return;
+             }
+           },
+           error : function(XMLHttpRequest, textStatus, errorThrown) { //
+                     console.log("getMembers:Server Error . Pleasy try again later." + errorThrown);
+                   },
+           complete : function() {
+                      }
+    });
 }

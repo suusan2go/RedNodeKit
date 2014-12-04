@@ -25,30 +25,33 @@
 
       //メンバー取得
       var projectid = $('#projects option:selected').val();
-      getMenmbers(setting.url, apikey, projectid).done(function(memberJson){
+      getMenmbers(setting.url, setting.apikey, projectid).done(function(memberJson){
 
         var members = memberJson.memberships;
         //メンバーー取得
         $('#members > option').remove();  
         $.each(members, function() {
-          var o1 = new Option("",this.user.id);
-          $(o1).html(this.user.name);  
-          $("#members").append(o1);  
+          if(this.user != null){
+            var o1 = new Option("",this.user.id);
+            $(o1).html(this.user.name);  
+            $("#members").append(o1);  
+          }
           return(this != undefined);
         });
       });
-    });
 
-    getTrackers(setting.url, setting.apikey,projects.identifier).done(function(trackerJson){
-      var trackers = trackerJson.trackers;
-      //トラッカー取得
-      $('#trackers > option').remove();  
-      $.each(trackers, function() {
-        var o1 = new Option("",this.id);
-        $(o1).html(this.name);  
-        $("#trackers").append(o1);  
-        return(this != undefined);
+      getTrackers(setting.url, setting.apikey, projectid).done(function(trackerJson){
+        var trackers = trackerJson.project.trackers;
+        //トラッカー取得
+        $('#trackers > option').remove();  
+        $.each(trackers, function() {
+          var o1 = new Option("",this.id);
+          $(o1).html(this.name);  
+          $("#trackers").append(o1);  
+          return(this != undefined);
+        });
       });
+
     });
 
     $('#loadModal').modal('hide') 
@@ -66,12 +69,27 @@
         //メンバーー取得
         $('#members > option').remove();  
         $.each(members, function() {
-          var o1 = new Option("",this.user.id);
-          $(o1).html(this.user.name);  
-          $("#members").append(o1);  
+          if(this.user != null){
+            var o1 = new Option("",this.user.id);
+            $(o1).html(this.user.name);  
+            $("#members").append(o1);  
+          }
           return(this != undefined);
         });
       });
+
+      //トラッカー一覧取得
+      getTrackers(setting.url, setting.apikey, projectid).done(function(trackerJson){
+        var trackers = trackerJson.project.trackers;
+        $('#trackers > option').remove();  
+        $.each(trackers, function() {
+          var o1 = new Option("",this.id);
+          $(o1).html(this.name);  
+          $("#trackers").append(o1);  
+          return(this != undefined);
+        });
+      });
+
     });
   }).change();
 
@@ -149,7 +167,7 @@
 
     <div class="form-group">
       <label for="title" class="col-sm-4 control-label">チケット名</label>
-      <div class="col-sm-8">
+      <div class="required col-sm-8">
         <input type="text" class="form-control" id="title" placeholder="チケットのタイトルを記載してください">
       </div>
     </div>

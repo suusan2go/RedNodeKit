@@ -102,19 +102,22 @@
             //change modal setting
             var projectid = ticketJson.issue.project.id;
             //members
-            getMenmbers(setting.url, apikey, projectid).done(function(memberJson){
+            getMenmbers(setting.url, setting.apikey, projectid).done(function(memberJson){
               var members = memberJson.memberships;
               $('#members_change > option').remove();  
               $.each(members, function() {
-                var o1 = new Option("",this.user.id);
-                $(o1).html(this.user.name);  
-                $("#members_change").append(o1);  
+                if(this.user != null){
+                  var o1 = new Option("",this.user.id);
+                  $(o1).html(this.user.name);  
+                  $("#members_change").append(o1);
+                }
                 return(this != undefined);
               });
               $('#members_change').val(ticketJson.issue.assigned_to.id);
             });
+
             //status
-            getStatuses(setting.url, apikey).done(function(statusJson){
+            getStatuses(setting.url, setting.apikey).done(function(statusJson){
               var statuses = statusJson.issue_statuses;
               $('#status_change > option').remove();  
               $.each(statuses, function() {
@@ -127,9 +130,8 @@
             });
 
             //trackers
-            getTrackers(setting.url, setting.apikey,projects.identifier).done(function(trackerJson){
-              var trackers = trackerJson.trackers;
-              //トラッカー取得
+            getTrackers(setting.url, setting.apikey, projectid).done(function(trackerJson){
+              var trackers = trackerJson.project.trackers;
               $('#trackers_change > option').remove();  
               $.each(trackers, function() {
                 var o1 = new Option("",this.id);
